@@ -1,0 +1,8 @@
+backup/
+__pycache__/
+*.pyc
+.venv/
+.env
+.idea/*
+!.idea/codeStyles/
+!.idea/runConfigurations/
