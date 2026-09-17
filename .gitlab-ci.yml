@@ -19,16 +19,13 @@ include:
 Buildx:
   stage: build
   image: docker:29
+  needs: []
   services:
-    - docker:29-dind
-  variables:
-    DOCKER_TLS_CERTDIR: "/certs"
+    - name: docker:29-dind
   script:
-    - test -n "$HUB_USER" && test -n "$HUB_PASSWORD"
-    - echo "$HUB_PASSWORD" | docker login -u "$HUB_USER" --password-stdin
-    - docker buildx create --use --driver docker-container --name builder
-    - docker buildx inspect --bootstrap
     - export DATE=$(date +%Y.%m.%d)
-    - docker buildx build --platform linux/amd64,linux/arm64 -t "jpiel/unifi-os-backup:$DATE" -t "jpiel/unifi-os-backup:latest" --push .
+    - docker login -u $HUB_USER -p $HUB_PASSWORD
+    - docker buildx create --use --name mybuilder
+    - docker buildx build --platform linux/amd64,linux/arm64 -t $HUB_REPO:$DATE -t $HUB_REPO:latest . --push
   rules:
     - if: '$CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == "push"'
