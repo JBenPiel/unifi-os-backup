@@ -18,6 +18,9 @@ All settings are environment variables. Docker requires `SERVER_ADDRESS`, `USER_
 | `BACKUP_CLEANUP_MIN_AGE` | No | `604800` (7 days) | Minimum backup age in seconds before cleanup may delete it. `0` removes the age limit. |
 | `BACKUP_CLEANUP_MAX_NUMBER` | No | `7` | Keep the configured number of newest backups; older backups are deleted only after reaching the minimum age. |
 | `CRON_SCHEDULE` | No | `0 0 * * *` | Docker-only five-field cron schedule; runs daily at midnight by default. |
+| `PUID` | No | `0` | Numeric user ID used to run the backup process. Set it to the owner of the mounted backup directory. |
+| `PGID` | No | `0` | Numeric group ID used to run the backup process. Set it to the group of the mounted backup directory. |
+| `TZ` | No | `UTC` | IANA timezone used for cron scheduling and generated timestamps, such as `America/Denver`. |
 
 Downloaded files use the format `unifi_os_backup_<timestamp>_<version>.unifi`. The version is the installed UniFi OS version reported by the server's authenticated `/api/system` endpoint. If that endpoint does not provide a usable version, the original backup ID is retained. Existing backups with IDs remain valid and are still considered for cleanup.
 
@@ -25,7 +28,7 @@ Boolean settings accept `true`/`false`, `1`/`0`, `yes`/`no`, or `on`/`off` (case
 
 # Docker setup
 
-The Docker image runs the backup script from cron. The schedule defaults to midnight every day and can be changed with `CRON_SCHEDULE`.
+The Docker image runs the backup script from cron. The schedule defaults to midnight every day and can be changed with `CRON_SCHEDULE`. Set `PUID` and `PGID` to the numeric IDs that own the host backup directory. The cron daemon remains root so it can schedule jobs and forward logs, while the Python backup process runs as those IDs. `TZ` controls both the cron schedule and timestamps.
 
 ```bash
 docker run -d \
@@ -40,6 +43,9 @@ docker run -d \
   -e BACKUP_CLEANUP_MIN_AGE="604800" \
   -e BACKUP_CLEANUP_MAX_NUMBER="7" \
   -e CRON_SCHEDULE="0 0 * * *" \
+  -e PUID="1000" \
+  -e PGID="1000" \
+  -e TZ="America/Denver" \
   -v /srv/unifi-os-backup:/var/lib/unifi-os-backup \
   jpiel/unifi-os-backup:latest
 ```
@@ -62,6 +68,9 @@ services:
       BACKUP_CLEANUP_MIN_AGE: "604800"
       BACKUP_CLEANUP_MAX_NUMBER: "7"
       CRON_SCHEDULE: "0 0 * * *"
+      PUID: "1000"
+      PGID: "1000"
+      TZ: "America/Denver"
     volumes:
       - /srv/unifi-os-backup:/var/lib/unifi-os-backup
 ```
